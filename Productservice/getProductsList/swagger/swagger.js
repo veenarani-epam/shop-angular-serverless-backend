@@ -24,6 +24,32 @@
           }
         }
       }
+    },
+    "/products/{productId}": {
+      "get": {
+        "summary": "productsbyid",
+        "description": "",
+        "operationId": "productsbyid.get./products/{productId}",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response"
+          }
+        }
+      }
     }
   },
   "definitions": {},

@@ -24,10 +24,20 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs14.x
-
-# you can overwrite defaults here
   stage: dev
   region: us-east-1
+  httpApi:
+    cors: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource: 
+            Fn::GetAtt:
+              - ProductsTable
+              - Arn
 
 # you can add statements to the Lambda function's IAM Role here
 #  iam:
@@ -61,13 +71,16 @@ provider:
   
 functions:
   getproductslist:
-    handler: handler.getproductslist
-#    The following are a few example events you can configure
-#    NOTE: Please make sure to change your handler code to work with those events
-#    Check the event documentation for details
+    handler: getproductslist.getproductslist
     events:
       - httpApi:
           path: /products/getproductslist
+          method: get
+  productsbyid:
+    handler: productsbyid.productsbyid
+    events:
+      - httpApi:
+          path: /products/{productId}
           method: get
 #      - websocket: $connect
 #      - s3: ${env:BUCKET}
@@ -113,6 +126,19 @@ functions:
 #     NewOutput:
 #       Description: "Description for the output"
 #       Value: "Some output value"
+resources:
+  Resources:
+    ProductsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ProductsTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
 
 # Add the serverless-webpack plugin
 

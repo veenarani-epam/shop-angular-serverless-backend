@@ -20,6 +20,8 @@
     "babel-plugin-source-map-support": "^2.1.2",
     "fs": "^0.0.1-security",
     "serverless-offline": "^11.1.1",
-    "webpack-node-externals": "^3.0.0"
+    "webpack-node-externals": "^3.0.0",
+    "@aws-sdk/client-dynamodb": "^3.95.0",
+    "ulid": "^2.3.0"
   }
 }
