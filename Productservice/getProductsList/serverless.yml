@@ -24,10 +24,21 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs14.x
-
-# you can overwrite defaults here
   stage: dev
   region: us-east-1
+  httpApi:
+    cors: true
+  environment:
+    PRODUCT_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    STOCKS_TABLE: "product-stock-${opt:stage, self:provider.stage}"
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "*"
 
 # you can add statements to the Lambda function's IAM Role here
 #  iam:
@@ -60,14 +71,25 @@ provider:
 #    - include-me-dir/**
   
 functions:
+  addproduct:
+    handler: addproduct.create
+    memorySize: 128
+    events:
+      - httpApi:
+          path: /products/addproduct
+          method: post
   getproductslist:
-    handler: handler.getproductslist
-#    The following are a few example events you can configure
-#    NOTE: Please make sure to change your handler code to work with those events
-#    Check the event documentation for details
+    handler: getproductslist.getproductslist
+    memorySize: 128
     events:
       - httpApi:
           path: /products/getproductslist
+          method: get
+  productsbyid:
+    handler: productsbyid.productsbyid
+    events:
+      - httpApi:
+          path: /products/{id}
           method: get
 #      - websocket: $connect
 #      - s3: ${env:BUCKET}
@@ -113,6 +135,44 @@ functions:
 #     NewOutput:
 #       Description: "Description for the output"
 #       Value: "Some output value"
+resources:
+  Resources:
+    ProductsTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "id"
+            AttributeType: "S"   
+        KeySchema:
+          -
+            AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:provider.environment.PRODUCT_TABLE}
+    StocksTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "id"
+            AttributeType: "S"   
+        KeySchema:
+          -
+            AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:provider.environment.STOCKS_TABLE}
 
 # Add the serverless-webpack plugin
 

@@ -13,13 +13,17 @@
     "serverless-webpack": "^5.10.0"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.95.0",
     "@babel/core": "^7.10.5",
     "@babel/plugin-transform-runtime": "^7.10.5",
     "@babel/preset-env": "^7.10.4",
     "babel-loader": "^8.1.0",
     "babel-plugin-source-map-support": "^2.1.2",
+    "bluebird": "^3.7.2",
     "fs": "^0.0.1-security",
     "serverless-offline": "^11.1.1",
+    "ulid": "^2.3.0",
+    "uuid": "^9.0.0",
     "webpack-node-externals": "^3.0.0"
   }
 }
