@@ -1,50 +1,49 @@
 'use strict';
+const AWS = require('aws-sdk');
 
-const { DynamoDBClient, ScanCommand } = require("@aws-sdk/client-dynamodb");
+AWS.config.setPromisesDependency(require('bluebird'));
 
-module.exports.getproductslist = async (event) => {
-  const dynamoClient = new DynamoDBClient({ region: "us-east-1" });
 
-  let startDate = new Date();
+module.exports.getproductslist = async (event, context, callback) => {
 
-  const input = {
-    TableName: "ProductsTable",
+  const productsTableScanParams = {
+    TableName: process.env.PRODUCT_TABLE,
   }
+  const stockTableScanParams = {
+    TableName: process.env.STOCKS_TABLE,
 
+  }
   try {
-    const data = await dynamoClient.send(new ScanCommand(input));
-
-    var formattedObjects = data.Items.map(function (item) {
-      return {
-        "id": item.id.S,
-        "count": item.count.N,
-        "description": item.description.S,
-        "price": item.price.N,
-        "title": item.title.S
-      };
+    console.log('Request getProductsList');
+    const products = await scan(productsTableScanParams);
+    const stocks = await scan(stockTableScanParams);
+    const result = products.map((product) => {
+      const stock = stocks.find((st) => st.id == product.id);
+      console.log(stock);
+      product.count = stock.count;
+      return product;
     });
-    data
-    let endDate = new Date();
-    let executionTimeInSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
-    console.log("Execution time:", executionTimeInSeconds);
-    if (!formattedObjects) {
-      return {
-        statusCode: 404,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-        },
-        body: JSON.stringify({
-          message: 'NotResultFound',
-        }),
-      }
-    }
-    return {
+    return callback(null, {
       statusCode: 200,
-      body: JSON.stringify(formattedObjects)
-    };
-  } catch (err) {
-    console.log(err);
+      body: JSON.stringify(result)
+    });
+  } catch (e) {
+    console.log('Error:', e.message);
+    return callback(null, {
+      statusCode: 500,
+      body: { message: 'An error occured during execution' },
+    });
   }
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  // return { message: 'Go Serverless v1.0! Your function executed successfully!', event };
+
+};
+
+async function scan(params) {
+  try {
+    const dynamoDB = new AWS.DynamoDB.DocumentClient();
+    const response = await dynamoDB.scan(params).promise();
+    return response.Items;
+  } catch (e) {
+    console.log(`An error occured during DynamoDB scan request. Params: ${JSON.stringify(params)} Error: ${e.message}`, e.message);
+    throw e;
+  }
 };

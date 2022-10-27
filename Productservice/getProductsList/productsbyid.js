@@ -1,53 +1,46 @@
 'use strict';
 
-const { DynamoDBClient, GetItemCommand } = require("@aws-sdk/client-dynamodb");
+const AWS = require('aws-sdk');
 
-module.exports.productsbyid = async (event) => {
-  const { productId } = event.pathParameters;
+AWS.config.setPromisesDependency(require('bluebird'));
 
-  const dynamoClient = new DynamoDBClient({ region: "us-east-1" });
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
-  let startDate = new Date();
 
-  const input = {
-    TableName: "ProductsTable",
+module.exports.productsbyid = (event, context, callback) => {
+  const params = {
+    TableName: process.env.PRODUCT_TABLE,
     Key: {
-      id: { S: productId },
-    }
-  }
+      id: (event.pathParameters.id),
+    },
+  };
 
-  try {
-    const data = await dynamoClient.send(new GetItemCommand(input));
-    var formattedObjects = {
-      "id": data.Item.id.S,
-      "count": data.Item.count.N,
-      "description": data.Item.description.S,
-      "price": data.Item.price.N,
-      "title": data.Item.title.S
-    };
-
-
-    let endDate = new Date();
-    let executionTimeInSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
-    console.log("Execution time:", executionTimeInSeconds);
-    if (!formattedObjects) {
-      return {
-        statusCode: 404,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
+  dynamoDb.get(params).promise()
+    .then(product => {
+      const stockParams = {
+        TableName: process.env.STOCKS_TABLE,
+        Key: {
+          id: (product.Item.id),
         },
-        body: JSON.stringify({
-          message: 'NotResultFound',
-        }),
-      }
-    }
-    return {
-      statusCode: 200,
-      body: JSON.stringify(formattedObjects)
-    };
-  } catch (err) {
-    console.log(err);
-  }
-  // Use this code if you don't use the http event with the LAMBDA-PROXY integration
-  // return { message: 'Go Serverless v1.0! Your function executed successfully!', event };
+      };
+      dynamoDb.get(stockParams).promise()
+        .then(stock => {
+          product.Item.count = stock.Item.count;
+          const response = {
+            statusCode: 200,
+            body: JSON.stringify(product.Item),
+          };
+          return callback(null, response);
+        })
+        .catch(error => {
+          console.error(error);
+          callback(new Error('Couldn\'t fetch stock data.'));
+          return;
+        });
+    })
+    .catch(error => {
+      console.error(error);
+      callback(new Error('Couldn\'t fetch products data.'));
+      return;
+    });
 };

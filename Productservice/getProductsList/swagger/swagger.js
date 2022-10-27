@@ -6,6 +6,25 @@
     "version": "1"
   },
   "paths": {
+    "/products/addproduct": {
+      "post": {
+        "summary": "addproduct",
+        "description": "",
+        "operationId": "addproduct.post./products/addproduct",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "200 response"
+          }
+        }
+      }
+    },
     "/products/getproductslist": {
       "get": {
         "summary": "getproductslist",
@@ -25,11 +44,11 @@
         }
       }
     },
-    "/products/{productId}": {
+    "/products/{id}": {
       "get": {
         "summary": "productsbyid",
         "description": "",
-        "operationId": "productsbyid.get./products/{productId}",
+        "operationId": "productsbyid.get./products/{id}",
         "consumes": [
           "application/json"
         ],
@@ -38,7 +57,7 @@
         ],
         "parameters": [
           {
-            "name": "productId",
+            "name": "id",
             "in": "path",
             "required": true,
             "type": "string"
