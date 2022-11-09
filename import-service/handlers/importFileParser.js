@@ -1,5 +1,5 @@
 const S3 = require('aws-sdk/clients/s3');
-const BUCKET = 'aws-import-service-bucket';
+const BUCKET = 'uploaded-task5';
 const s3 = new S3();
 const csvParser = require('csv-parser');
 const AWS = require("aws-sdk");
