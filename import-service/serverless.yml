@@ -22,9 +22,12 @@ frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
   stage: dev
   region: us-east-1
+  httpApi:
+    cors: true
+  
 
 # you can overwrite defaults here
 #  stage: dev
@@ -42,7 +45,10 @@ iam:
   role:
     statements:
         - Effect: Allow
-          Action: s3:GetObject
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:PutObjectAcl
           Resource: arn:aws:s3:::aws-import-service-bucket
         - Effect: Allow
           Action: s3:*
@@ -83,9 +89,16 @@ functions:
   importProductsFile:
     handler: handlers/importProductsFile.importProductsFile
     events:
-      - httpApi:
+      - http:
           path: /import
           method: get
+          cors: true
+          authorizer:
+            #name: authorization-service-dev-basicAuthorizer
+            type: token
+            resultTtlInSeconds: 0
+            identityValidationExpression: '^Basic [-0-9a-zA-Z._=]*$'
+            arn: arn:aws:lambda:us-east-1:092773753723:function:authorization-service-dev-basicAuthorizer
   importFileParser:
     handler: handlers/importFileParser.importFileParser
     events:
@@ -176,6 +189,7 @@ resources:
         Protocol: "email"
         TopicArn:
           Ref: createProductTopic 
+    
 
 plugins:
   - serverless-plugin-existing-s3
